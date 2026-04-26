@@ -16,35 +16,38 @@
 
 </div>
 
+
 ---
 
 ## 📸 Screenshots
 
 **Main Dashboard** — Live camera feeds, real-time alert sidebar, and system health stats
-![Dashboard](docs/screenshot-dashboard.png)
+![Dashboard](./docs/screenshot-dashboard.png)
 
 **Event Database** — Filterable, searchable log of all AI-detected incidents with snapshot thumbnails and CSV export
-![Events](docs/screenshot-events.png)
+![Events](./docs/screenshot-events.png)
 
 **Analytics** — 7-day trend charts, event type breakdown, and KPI summary cards
-![Analytics](docs/screenshot-analytics.png)
+![Analytics](./docs/screenshot-analytics.png)
 
 ---
 
 ## ✨ Key Features
 
-| Feature | Description |
-|---------|-------------|
-| 🎥 **Multi-Camera Processing** | Concurrent multi-threaded video stream analysis across unlimited cameras |
-| 🧠 **YOLOv8 + ByteTrack** | State-of-the-art object detection + multi-object tracking pipeline |
-| ⚡ **Sub-Second Alerts** | Real-time WebSocket event pushes — dashboard updates in < 1 second |
-| 🔄 **Hot-Reload Camera Config** | Add/remove cameras live; AI worker spawns/kills inference threads with zero downtime |
-| 🌐 **Web Stream Extraction** | `yt-dlp` integration extracts raw feeds from YouTube Live and 1000+ streaming platforms |
-| 🗺️ **ROI Polygon Editor** | Draw custom regions-of-interest per camera; only trigger alerts within defined zones |
-| 🧹 **Automated Storage Pruning** | Background routine purges clips, thumbnails & DB records older than 30 days |
-| 📊 **Analytics Dashboard** | Historical incident charts, camera uptime stats, and event trend analysis |
-| 🔐 **JWT Authentication** | Secure login with bcrypt password hashing and token-based session management |
-| 🐳 **One-Command Deployment** | Fully containerized via Docker Compose — backend, frontend, and AI worker |
+
+| Feature                          | Description                                                                             |
+| -------------------------------- | --------------------------------------------------------------------------------------- |
+| 🎥 **Multi-Camera Processing**   | Concurrent multi-threaded video stream analysis across unlimited cameras                |
+| 🧠 **YOLOv8 + ByteTrack**        | State-of-the-art object detection + multi-object tracking pipeline                      |
+| ⚡ **Sub-Second Alerts**          | Real-time WebSocket event pushes — dashboard updates in < 1 second                      |
+| 🔄 **Hot-Reload Camera Config**  | Add/remove cameras live; AI worker spawns/kills inference threads with zero downtime    |
+| 🌐 **Web Stream Extraction**     | `yt-dlp` integration extracts raw feeds from YouTube Live and 1000+ streaming platforms |
+| 🗺️ **ROI Polygon Editor**       | Draw custom regions-of-interest per camera; only trigger alerts within defined zones    |
+| 🧹 **Automated Storage Pruning** | Background routine purges clips, thumbnails & DB records older than 30 days             |
+| 📊 **Analytics Dashboard**       | Historical incident charts, camera uptime stats, and event trend analysis               |
+| 🔐 **JWT Authentication**        | Secure login with bcrypt password hashing and token-based session management            |
+| 🐳 **One-Command Deployment**    | Fully containerized via Docker Compose — backend, frontend, and AI worker               |
+
 
 ---
 
@@ -81,19 +84,23 @@
 ## 🛠️ Tech Stack
 
 **Frontend**
+
 - React 19, TypeScript, Vite 6
 - Tailwind CSS v4, Recharts, Framer Motion
 - Socket.IO Client, React Hook Form, Zod
 
 **Backend**
+
 - Node.js, Express 4, Socket.IO
 - Better-SQLite3, bcryptjs, jsonwebtoken, dotenv
 
 **AI Worker**
+
 - Python 3.10+, PyTorch, Ultralytics YOLOv8
 - OpenCV, ByteTrack, yt-dlp, Flask
 
 **Infrastructure**
+
 - Docker, Docker Compose
 - Multi-stage builds, volume mounts for persistent media
 
@@ -131,6 +138,18 @@ sar---suspicious-activity-recognition/
 
 ---
 
+## ✅ Prerequisites
+
+**Option 1 (Docker) requires:**
+- [Docker](https://docs.docker.com/get-docker/) & Docker Compose v2+
+- Git
+
+**Option 2 (Hybrid / local dev) also requires:**
+- [Python 3.10+](https://www.python.org/downloads/) with `pip`
+- [Node.js 18+](https://nodejs.org/) with `npm`
+
+---
+
 ## 🚀 Quick Start
 
 ### Option 1 — Docker (Recommended, one command)
@@ -148,7 +167,7 @@ cp .env.example .env
 docker compose up --build
 ```
 
-Open **http://localhost:3000** — Default credentials: `admin@sar.ai` / `admin123`
+Open **[http://localhost:3000](http://localhost:3000)** — Default credentials: `admin@sar.ai` / `admin123`
 
 ### Option 2 — Hybrid (Local webcam testing)
 
@@ -168,13 +187,15 @@ python worker.py
 
 Copy `.env.example` → `.env` and configure:
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `JWT_SECRET` | Secret key for JWT signing | — (required) |
-| `PORT` | Backend server port | `3001` |
-| `CLEANUP_MAX_AGE_DAYS` | Days before media is auto-deleted | `30` |
-| `ADMIN_EMAIL` | Initial admin account email | `admin@sar.ai` |
-| `ADMIN_PASSWORD` | Initial admin password | `admin123` |
+
+| Variable               | Description                       | Default        |
+| ---------------------- | --------------------------------- | -------------- |
+| `JWT_SECRET`           | Secret key for JWT signing        | — (required)   |
+| `PORT`                 | Backend server port               | `3001`         |
+| `CLEANUP_MAX_AGE_DAYS` | Days before media is auto-deleted | `30`           |
+| `ADMIN_EMAIL`          | Initial admin account email       | `admin@sar.ai` |
+| `ADMIN_PASSWORD`       | Initial admin password            | `admin123`     |
+
 
 ---
 
