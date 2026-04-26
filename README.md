@@ -18,13 +18,16 @@
 
 ---
 
-## 📸 Demo
+## 📸 Screenshots
 
-> Live dashboard showing multi-camera feeds with real-time AI annotations, event alerts, and analytics.
+**Main Dashboard** — Live camera feeds, real-time alert sidebar, and system health stats
+![Dashboard](docs/screenshot-dashboard.png)
 
-| Dashboard | Live Feeds | Event Log |
-|-----------|-----------|-----------|
-| Camera management & system health | MJPEG streams with bounding boxes | AI-flagged incidents with timestamps |
+**Event Database** — Filterable, searchable log of all AI-detected incidents with snapshot thumbnails and CSV export
+![Events](docs/screenshot-events.png)
+
+**Analytics** — 7-day trend charts, event type breakdown, and KPI summary cards
+![Analytics](docs/screenshot-analytics.png)
 
 ---
 
