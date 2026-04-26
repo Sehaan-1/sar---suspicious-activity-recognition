@@ -1,0 +1,8 @@
+{
+  "loitering_seconds": 60,
+  "unattended_bag_radius": 2.5,
+  "pose_estimation": true,
+  "confidence_threshold": 75,
+  "tracker": "bytetrack",
+  "yolo_model": "small"
+}

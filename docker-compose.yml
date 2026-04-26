@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  backend-frontend:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+    volumes:
+      - ./server/sar.db:/app/server/sar.db
+      - media_data:/app/media
+
+  ai-worker:
+    build: ./ai_worker
+    ports:
+      - "5001:5001"
+    environment:
+      - API_URL=http://backend-frontend:3000/api/ingest/event
+      - CAMERAS_URL=http://backend-frontend:3000/api/cameras
+      - YOLO_MODEL=yolov8s.pt
+      - YOLO_DEVICE=cpu          # Change to 'cuda' if you have a GPU
+      - SKIP_FRAMES=2            # Run inference every Nth frame (2 = 50% load)
+      - CLIPS_DIR=/media/clips
+      - THUMBS_DIR=/media/thumbs
+    volumes:
+      - media_data:/media
+    depends_on:
+      - backend-frontend
+    # Uncomment below to enable GPU (requires nvidia-docker)
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
+
+volumes:
+  media_data:
+

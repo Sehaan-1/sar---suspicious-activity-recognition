@@ -1,0 +1,6 @@
+{
+  "name": "SAR - Suspicious Activity Recognition",
+  "description": "A portfolio-ready AI system dashboard connecting to computer vision modules.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}

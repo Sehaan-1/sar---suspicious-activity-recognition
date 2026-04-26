@@ -1,0 +1,40 @@
+node_modules/
+build/
+dist/
+coverage/
+.DS_Store
+*.log
+.env*
+!.env.example
+
+# Models / ML artifacts
+*.pt
+*.onnx
+*.pth
+
+# SQLite runtime
+*.db
+*.db-shm
+*.db-wal
+
+# Python env/cache
+ai_worker/venv/
+.venv/
+**/__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Media/runtime output
+media/
+media_data/
+clips/
+thumbs/
+
+# Node/build caches
+node_modules/
+dist/
+.vite/
+.cache/
+coverage/
