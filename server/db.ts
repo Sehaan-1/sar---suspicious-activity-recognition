@@ -1,4 +1,5 @@
 import Database from 'better-sqlite3';
+import 'dotenv/config';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import bcrypt from 'bcryptjs';
@@ -60,10 +61,17 @@ if (count.count === 0) {
 // Seed default admin user if users table is empty
 const userCount = db.prepare('SELECT COUNT(*) as count FROM users').get() as { count: number };
 if (userCount.count === 0) {
-  const hash = bcrypt.hashSync('admin123', 10);
-  db.prepare('INSERT INTO users (email, password_hash, role) VALUES (?, ?, ?)')
-    .run('admin@sar.ai', hash, 'ADMIN');
-  console.log('[DB] Default admin seeded → admin@sar.ai / admin123');
+  const adminEmail = process.env.ADMIN_EMAIL?.trim();
+  const adminPassword = process.env.ADMIN_PASSWORD?.trim();
+
+  if (adminEmail && adminPassword) {
+    const hash = bcrypt.hashSync(adminPassword, 10);
+    db.prepare('INSERT INTO users (email, password_hash, role) VALUES (?, ?, ?)')
+      .run(adminEmail, hash, 'ADMIN');
+    console.log(`[DB] Initial admin seeded for ${adminEmail}`);
+  } else {
+    console.warn('[DB] No users exist. Set ADMIN_EMAIL and ADMIN_PASSWORD to seed the initial admin account.');
+  }
 }
 
 export default db;

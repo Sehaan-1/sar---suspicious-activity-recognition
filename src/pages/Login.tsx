@@ -4,7 +4,7 @@ import { ShieldAlert, Eye, EyeOff, Loader2 } from 'lucide-react';
 
 export default function Login() {
   const navigate = useNavigate();
-  const [email,    setEmail]    = useState('admin@sar.ai');
+  const [email,    setEmail]    = useState('');
   const [password, setPassword] = useState('');
   const [showPass, setShowPass] = useState(false);
   const [error,    setError]    = useState('');
@@ -76,7 +76,7 @@ export default function Login() {
                 className="w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-3 text-white
                            placeholder:text-slate-500 focus:outline-none focus:border-blue-500
                            focus:ring-1 focus:ring-blue-500 transition-all text-sm"
-                placeholder="admin@sar.ai"
+                placeholder="you@example.com"
                 required
               />
             </div>
@@ -130,14 +130,6 @@ export default function Login() {
               {loading ? 'Signing in...' : 'Sign In'}
             </button>
           </form>
-
-          {/* Credentials hint */}
-          <p className="text-center text-xs text-slate-500 mt-6">
-            Default:{' '}
-            <span className="text-slate-400 font-mono">admin@sar.ai</span>
-            {' / '}
-            <span className="text-slate-400 font-mono">admin123</span>
-          </p>
         </div>
       </div>
     </div>

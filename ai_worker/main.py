@@ -4,8 +4,9 @@ import requests
 import json
 from datetime import datetime
 
-# NOTE: This is a skeleton for the AI Worker to run on a machine with a GPU.
-# In a real setup, you would load YOLOv8 and ByteTrack here.
+# NOTE: Legacy demo script only.
+# Docker and production-like runs use ai_worker/worker.py, which contains the
+# dynamic multi-camera worker. Keep this file around only as a small mock example.
 
 API_URL = "http://localhost:3000/api/ingest/event"
 

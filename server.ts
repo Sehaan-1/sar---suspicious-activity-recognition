@@ -1,4 +1,5 @@
 import express from 'express';
+import 'dotenv/config';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import { createServer as createViteServer } from 'vite';
@@ -8,6 +9,7 @@ import fs from 'fs';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import db from './server/db.js';
+import { requireEnv, validateRequiredEnv } from './server/env.js';
 import net from 'net';
 import { z } from 'zod';
 
@@ -15,6 +17,8 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 async function startServer() {
+  validateRequiredEnv();
+
   const app = express();
   const server = createServer(app);
   const io = new Server(server, { path: '/socket.io' });
@@ -68,9 +72,9 @@ async function startServer() {
   setTimeout(cleanupOldEvents, 10000);
   setInterval(cleanupOldEvents, 24 * 60 * 60 * 1000);
 
-  const JWT_SECRET = process.env.JWT_SECRET || 'sar-dev-secret-change-in-prod';
+  const JWT_SECRET = requireEnv('JWT_SECRET');
   const JWT_EXPIRES = '24h';
-  const INGEST_API_KEY = process.env.INGEST_API_KEY || 'sar-dev-ingest-key-change-in-prod';
+  const INGEST_API_KEY = requireEnv('INGEST_API_KEY');
 
   // --- Auth Middleware ---
   function requireAuth(req: any, res: any, next: any) {

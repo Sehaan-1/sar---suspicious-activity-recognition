@@ -32,7 +32,10 @@ CAMERAS_URL     = os.environ.get('CAMERAS_URL',  'http://localhost:3000/api/came
 MODEL_NAME      = os.environ.get('YOLO_MODEL',   'yolov8s.pt')
 DEVICE          = os.environ.get('YOLO_DEVICE',  'cpu')   # 'cuda' for GPU
 SKIP_FRAMES     = int(os.environ.get('SKIP_FRAMES', '2'))  # Run inference every Nth frame
-INGEST_API_KEY  = os.environ.get('INGEST_API_KEY', 'sar-dev-ingest-key-change-in-prod')
+INGEST_API_KEY  = os.environ.get('INGEST_API_KEY')
+
+if not INGEST_API_KEY:
+    raise RuntimeError("Missing required environment variable: INGEST_API_KEY")
 
 # Shared request headers for authenticated API calls
 API_HEADERS     = {'X-API-Key': INGEST_API_KEY}

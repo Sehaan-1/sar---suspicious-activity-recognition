@@ -9,7 +9,8 @@
     "build": "vite build && tsx build-server.ts",
     "preview": "vite preview",
     "clean": "rm -rf dist",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "test": "node test/security-defaults.test.cjs"
   },
   "dependencies": {
     "@google/genai": "^1.29.0",

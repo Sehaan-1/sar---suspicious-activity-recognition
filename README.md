@@ -125,8 +125,8 @@ sar---suspicious-activity-recognition/
 │   │   ├── rules.py            # Activity rule engine (ROI, loitering, etc.)
 │   │   ├── clip_saver.py       # Video clip + thumbnail writer
 │   │   └── mjpeg_server.py     # Flask MJPEG streaming server
-│   ├── worker.py               # Dynamic camera thread manager
-│   ├── main.py                 # Entry point
+│   ├── worker.py               # Worker entry point used by Docker
+│   ├── main.py                 # Legacy/demo mock script
 │   └── requirements.txt
 ├── server.ts                   # Express backend entry point
 ├── build-server.ts             # Production build script
@@ -161,13 +161,13 @@ cd sar---suspicious-activity-recognition
 
 # Configure environment
 cp .env.example .env
-# Edit .env: set JWT_SECRET, CLEANUP_MAX_AGE_DAYS, etc.
+# Edit .env: set JWT_SECRET, INGEST_API_KEY, and initial admin credentials.
 
 # Launch all services
 docker compose up --build
 ```
 
-Open **[http://localhost:3000](http://localhost:3000)** — Default credentials: `admin@sar.ai` / `admin123`
+Open **[http://localhost:3000](http://localhost:3000)** and sign in with the admin credentials you set in `.env`.
 
 ### Option 2 — Hybrid (Local webcam testing)
 
@@ -191,11 +191,23 @@ Copy `.env.example` → `.env` and configure:
 | Variable               | Description                       | Default        |
 | ---------------------- | --------------------------------- | -------------- |
 | `JWT_SECRET`           | Secret key for JWT signing        | — (required)   |
-| `PORT`                 | Backend server port               | `3001`         |
+| `INGEST_API_KEY`       | Shared key for worker ingest APIs | — (required)   |
+| `PORT`                 | Backend server port               | `3000`         |
 | `CLEANUP_MAX_AGE_DAYS` | Days before media is auto-deleted | `30`           |
-| `ADMIN_EMAIL`          | Initial admin account email       | `admin@sar.ai` |
-| `ADMIN_PASSWORD`       | Initial admin password            | `admin123`     |
+| `ADMIN_EMAIL`          | Initial admin account email       | — (optional)   |
+| `ADMIN_PASSWORD`       | Initial admin password            | — (optional)   |
 
+`ADMIN_EMAIL` and `ADMIN_PASSWORD` are only used when the users table is empty. If no users exist and those values are omitted, the app starts without seeding an account and logs a warning.
+
+---
+
+## Testing
+
+```bash
+npm test
+```
+
+The current test suite uses Node's built-in test runner and includes guardrails against reintroducing hardcoded development secrets.
 
 ---
 
