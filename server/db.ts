@@ -1,13 +1,10 @@
 import Database from 'better-sqlite3';
 import 'dotenv/config';
-import path from 'path';
-import { fileURLToPath } from 'url';
 import bcrypt from 'bcryptjs';
+import { ensureRuntimeDirs, getDbPath } from './paths.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const dbPath = path.join(__dirname, 'sar.db');
+ensureRuntimeDirs();
+const dbPath = getDbPath();
 const db = new Database(dbPath);
 
 // Initialize schema
@@ -48,14 +45,20 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_events_timestamp ON events(timestamp);
 `);
 
-// Insert default cameras if empty
+// Insert local demo cameras only outside production, or when explicitly requested.
 const count = db.prepare('SELECT COUNT(*) as count FROM cameras').get() as { count: number };
-if (count.count === 0) {
+const shouldSeedSampleCameras =
+  process.env.SEED_SAMPLE_CAMERAS === 'true' ||
+  (process.env.NODE_ENV !== 'production' && process.env.SEED_SAMPLE_CAMERAS !== 'false');
+
+if (count.count === 0 && shouldSeedSampleCameras) {
   const insertCamera = db.prepare('INSERT INTO cameras (name, source_url, location) VALUES (?, ?, ?)');
   insertCamera.run('Main Gate', 'rtsp://internal/main-gate', 'Entrance');
   insertCamera.run('Lobby', 'rtsp://internal/lobby', 'Lobby');
   insertCamera.run('Back Alley', 'rtsp://internal/alley', 'Loading Dock');
   insertCamera.run('Cafeteria', 'rtsp://internal/cafe', 'Cafeteria');
+} else if (count.count === 0) {
+  console.log('[DB] No cameras seeded. Add real cameras from the Feeds page or set SEED_SAMPLE_CAMERAS=true for demo data.');
 }
 
 // Seed default admin user if users table is empty

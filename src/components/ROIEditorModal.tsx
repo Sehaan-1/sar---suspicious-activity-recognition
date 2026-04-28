@@ -15,10 +15,12 @@ type Point = { x: number; y: number };
 export default function ROIEditorModal({ camera, isOpen, onClose, onSuccess }: Props) {
   const [points, setPoints] = useState<Point[]>([]);
   const [isSaving, setIsSaving] = useState(false);
+  const [streamError, setStreamError] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Load existing ROI if present
   useEffect(() => {
+    setStreamError(false);
     if (camera && camera.roi_polygon) {
       try {
         const parsed = JSON.parse(camera.roi_polygon);
@@ -105,10 +107,18 @@ export default function ROIEditorModal({ camera, isOpen, onClose, onSuccess }: P
               ref={containerRef}
               className="relative w-full aspect-video bg-black rounded-lg overflow-hidden border border-slate-800 cursor-crosshair shadow-inner"
             >
-              {/* Fake Video Feed (Could be real MJPEG later) */}
-              <div className="absolute inset-0 flex items-center justify-center text-slate-800 font-mono text-sm pointer-events-none">
-                [LIVE FEED PLACEHOLDER]
-              </div>
+              <img
+                src={`/stream/${camera.camera_id}`}
+                alt={`${camera.name} live ROI reference`}
+                className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+                onError={() => setStreamError(true)}
+                onLoad={() => setStreamError(false)}
+              />
+              {streamError && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black text-slate-600 font-mono text-sm pointer-events-none">
+                  STREAM UNAVAILABLE
+                </div>
+              )}
 
               {/* Drawing Layer */}
               <svg 

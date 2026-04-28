@@ -1,6 +1,6 @@
 import express from 'express';
 import 'dotenv/config';
-import { createServer } from 'http';
+import { createServer, request as httpRequest } from 'http';
 import { Server } from 'socket.io';
 import { createServer as createViteServer } from 'vite';
 import path from 'path';
@@ -10,6 +10,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import db from './server/db.js';
 import { requireEnv, validateRequiredEnv } from './server/env.js';
+import { ensureRuntimeDirs, getConfigPath, getMediaPath } from './server/paths.js';
 import net from 'net';
 import { z } from 'zod';
 
@@ -18,6 +19,7 @@ const __dirname = path.dirname(__filename);
 
 async function startServer() {
   validateRequiredEnv();
+  ensureRuntimeDirs();
 
   const app = express();
   const server = createServer(app);
@@ -26,13 +28,12 @@ async function startServer() {
 
   app.use(express.json());
 
-  // Calculate correct media path depending on if we are running from dist/ or root
-  const isProd = process.env.NODE_ENV === 'production';
-  const mediaPath = isProd ? path.join(__dirname, '..', 'media') : path.join(__dirname, 'media');
+  const mediaPath = getMediaPath();
   app.use('/media', express.static(mediaPath));
+  const workerStreamBase = process.env.WORKER_STREAM_BASE || 'http://localhost:5001';
 
   // --- Automated Media Cleanup ---
-  const MAX_STORAGE_DAYS = 30; // Delete clips older than 30 days
+  const MAX_STORAGE_DAYS = Number(process.env.CLEANUP_MAX_AGE_DAYS || 30);
   function cleanupOldEvents() {
     try {
       const cutoffDate = new Date();
@@ -106,6 +107,10 @@ async function startServer() {
   }
 
   // --- API Routes ---
+
+  app.get('/api/health', (_req, res) => {
+    res.json({ ok: true, service: 'backend', timestamp: new Date().toISOString() });
+  });
 
   // POST /api/auth/login — public (no auth required)
   app.post('/api/auth/login', (req, res) => {
@@ -206,7 +211,7 @@ async function startServer() {
       res.json({ id: info.lastInsertRowid, status: 'ACTIVE' });
     } catch (err: any) {
       if (err instanceof z.ZodError) {
-        res.status(400).json({ error: (err as any).errors[0].message });
+        res.status(400).json({ error: err.issues[0]?.message || 'Invalid camera payload' });
       } else {
         console.error('[POST /api/cameras]', err);
         res.status(500).json({ error: 'Internal Server Error' });
@@ -223,6 +228,45 @@ async function startServer() {
     const { roi_polygon } = req.body;
     db.prepare('UPDATE cameras SET roi_polygon = ? WHERE camera_id = ?').run(roi_polygon, req.params.id);
     res.json({ success: true });
+  });
+
+  const cameraStatusSchema = z.object({
+    status: z.enum(['ACTIVE', 'ONLINE', 'OFFLINE', 'RETRYING', 'DISABLED']),
+  });
+
+  app.patch('/api/cameras/:id/status', requireApiKey, (req, res) => {
+    try {
+      const { status } = cameraStatusSchema.parse(req.body);
+      db.prepare('UPDATE cameras SET status = ? WHERE camera_id = ?').run(status, req.params.id);
+      res.json({ success: true, status });
+    } catch (err: any) {
+      if (err instanceof z.ZodError) {
+        return res.status(400).json({ error: err.issues[0]?.message || 'Invalid camera status' });
+      }
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get('/stream/:cameraId', (req, res) => {
+    const upstreamUrl = new URL(`/stream/${req.params.cameraId}`, workerStreamBase);
+    const upstream = httpRequest(upstreamUrl, (upstreamRes) => {
+      res.writeHead(upstreamRes.statusCode || 200, {
+        'Content-Type': upstreamRes.headers['content-type'] || 'multipart/x-mixed-replace; boundary=frame',
+        'Cache-Control': 'no-store',
+      });
+      upstreamRes.pipe(res);
+    });
+
+    upstream.on('error', () => {
+      if (!res.headersSent) {
+        res.status(503).json({ error: 'Stream unavailable' });
+      } else {
+        res.end();
+      }
+    });
+
+    req.on('close', () => upstream.destroy());
+    upstream.end();
   });
 
   // Events
@@ -379,7 +423,7 @@ async function startServer() {
   });
 
   // Settings config — read/write a JSON file on disk
-  const CONFIG_PATH = path.join(__dirname, 'server', 'config.json');
+  const CONFIG_PATH = getConfigPath();
 
   app.get('/api/config', requireAuthOrApiKey, (req, res) => {
     try {

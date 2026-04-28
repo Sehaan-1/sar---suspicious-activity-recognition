@@ -37,5 +37,5 @@ test('runtime entry points fail closed when shared secrets are missing', () => {
 
 test('package exposes an automated test script', () => {
   const pkg = JSON.parse(read('package.json'));
-  assert.equal(pkg.scripts.test, 'node test/security-defaults.test.cjs');
+  assert.equal(pkg.scripts.test, 'node test/run-tests.cjs');
 });

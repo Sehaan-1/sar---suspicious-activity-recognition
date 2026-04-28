@@ -10,7 +10,9 @@
     "preview": "vite preview",
     "clean": "rm -rf dist",
     "lint": "tsc --noEmit",
-    "test": "node test/security-defaults.test.cjs"
+    "test": "node test/run-tests.cjs",
+    "test:python": "python -m unittest discover ai_worker/tests",
+    "test:all": "npm run test && npm run test:python"
   },
   "dependencies": {
     "@google/genai": "^1.29.0",

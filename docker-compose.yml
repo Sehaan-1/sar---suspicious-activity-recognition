@@ -1,18 +1,27 @@
 services:
   backend-frontend:
     build: .
+    restart: unless-stopped
     env_file:
       - .env
     ports:
       - "3000:3000"
     environment:
       - NODE_ENV=production
+      - DATA_DIR=/data
+      - WORKER_STREAM_BASE=http://ai-worker:5001
     volumes:
-      - ./server/sar.db:/app/server/sar.db
-      - media_data:/app/media
+      - runtime_data:/data
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
 
   ai-worker:
     build: ./ai_worker
+    restart: unless-stopped
     env_file:
       - .env
     ports:
@@ -20,15 +29,22 @@ services:
     environment:
       - API_URL=http://backend-frontend:3000/api/ingest/event
       - CAMERAS_URL=http://backend-frontend:3000/api/cameras
-      - YOLO_MODEL=yolov8s.pt
+      - YOLO_MODEL=yolov8n.pt
       - YOLO_DEVICE=cpu          # Change to 'cuda' if you have a GPU
-      - SKIP_FRAMES=2            # Run inference every Nth frame (2 = 50% load)
-      - CLIPS_DIR=/media/clips
-      - THUMBS_DIR=/media/thumbs
+      - TARGET_FPS=3
+      - CLIPS_DIR=/data/media/clips
+      - THUMBS_DIR=/data/media/thumbs
     volumes:
-      - media_data:/media
+      - runtime_data:/data
     depends_on:
-      - backend-frontend
+      backend-frontend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5001/health', timeout=3).read()"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
     # Uncomment below to enable GPU (requires nvidia-docker)
     # deploy:
     #   resources:
@@ -39,4 +55,4 @@ services:
     #           capabilities: [gpu]
 
 volumes:
-  media_data:
+  runtime_data:

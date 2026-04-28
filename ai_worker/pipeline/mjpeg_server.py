@@ -20,12 +20,19 @@ app = Flask(__name__)
 # Written by CameraWorker threads, read by Flask request threads.
 _frame_store: dict[int, np.ndarray] = {}
 _lock = threading.Lock()
+_health_provider = None
 
 
 def push_frame(camera_id: int, frame: np.ndarray):
     """Called by worker.py on every captured frame to update the stream."""
     with _lock:
         _frame_store[camera_id] = frame.copy()
+
+
+def set_health_provider(provider):
+    """Register a callable returning worker-level health details."""
+    global _health_provider
+    _health_provider = provider
 
 
 def _placeholder_frame(camera_id: int) -> np.ndarray:
@@ -86,7 +93,10 @@ def health():
     """Quick health check — returns which cameras are currently streaming."""
     with _lock:
         active = list(_frame_store.keys())
-    return {'status': 'ok', 'streaming_cameras': active}
+    payload = {'ok': True, 'service': 'ai-worker', 'streaming_cameras': active}
+    if _health_provider:
+        payload.update(_health_provider())
+    return payload
 
 
 def start(port: int = 5001):

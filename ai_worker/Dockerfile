@@ -15,8 +15,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Pre-download YOLOv8s weights at build time so the container starts instantly
-RUN python -c "from ultralytics import YOLO; YOLO('yolov8s.pt')"
+# Pre-download the CPU-friendly default model so the container starts quickly
+RUN python -c "from ultralytics import YOLO; YOLO('yolov8n.pt')"
 
 COPY . .
 

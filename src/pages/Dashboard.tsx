@@ -7,7 +7,8 @@ import { authFetch } from '../lib/auth';
 export default function Dashboard() {
   const { alerts } = useWebSocket();
   const [stats, setStats] = useState({ total: 0, byType: [] });
-  const [cameras, setCameras] = useState([]);
+  const [cameras, setCameras] = useState<any[]>([]);
+  const [streamErrors, setStreamErrors] = useState<Record<number, boolean>>({});
 
   useEffect(() => {
     authFetch('/api/dashboard/summary')
@@ -28,7 +29,7 @@ export default function Dashboard() {
         <div className="flex gap-8">
           <div className="flex flex-col">
             <span className="text-[10px] uppercase font-bold text-slate-400 tracking-widest">Active Streams</span>
-            <span className="text-sm font-semibold text-slate-900">{cameras.length} / 4 Channels</span>
+            <span className="text-sm font-semibold text-slate-900">{cameras.filter((cam: any) => cam.status === 'ONLINE' || cam.status === 'ACTIVE').length} / {cameras.length} Channels</span>
           </div>
           <div className="flex flex-col">
             <span className="text-[10px] uppercase font-bold text-slate-400 tracking-widest">Alerts (24h)</span>
@@ -89,17 +90,28 @@ export default function Dashboard() {
                 <div key={cam.camera_id} className="bg-slate-900 rounded-xl overflow-hidden relative border border-slate-800 flex items-center justify-center min-h-[200px]">
                   <div className="absolute top-3 left-3 flex gap-2 z-10">
                     <span className="px-2 py-0.5 bg-black/60 backdrop-blur text-[10px] text-white font-bold rounded uppercase tracking-tighter border border-white/20">Cam 0{index + 1}: {cam.name}</span>
-                    <span className="px-2 py-0.5 bg-green-500/80 backdrop-blur text-[10px] text-white font-bold rounded uppercase tracking-tighter">Live</span>
+                    <span className={cn(
+                      "px-2 py-0.5 backdrop-blur text-[10px] text-white font-bold rounded uppercase tracking-tighter",
+                      cam.status === 'ONLINE' || cam.status === 'ACTIVE' ? "bg-green-500/80" :
+                      cam.status === 'RETRYING' ? "bg-yellow-500/80" : "bg-red-500/80"
+                    )}>{cam.status === 'ACTIVE' ? 'READY' : cam.status}</span>
                   </div>
                   
                   {/* Live MJPEG Stream */}
-                  <div className="w-full h-full bg-black" style={{ minHeight: '160px' }}>
+                  <div className="w-full h-full bg-black relative" style={{ minHeight: '160px' }}>
                     <img
-                      src={`http://localhost:5001/stream/${cam.camera_id}`}
+                      src={`/stream/${cam.camera_id}`}
                       alt={`${cam.name} feed`}
                       className="w-full h-full object-cover"
                       style={{ minHeight: '160px', display: 'block' }}
+                      onError={() => setStreamErrors(prev => ({ ...prev, [cam.camera_id]: true }))}
+                      onLoad={() => setStreamErrors(prev => ({ ...prev, [cam.camera_id]: false }))}
                     />
+                    {streamErrors[cam.camera_id] && (
+                      <div className="absolute inset-0 flex items-center justify-center bg-slate-950 text-xs font-semibold uppercase tracking-wider text-slate-500">
+                        Stream offline
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
@@ -193,4 +205,3 @@ function StatCard({ title, value, icon: Icon, trend, color = "text-slate-900" }:
     </div>
   );
 }
-

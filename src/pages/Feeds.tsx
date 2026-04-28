@@ -11,6 +11,7 @@ export default function Feeds() {
   const [loading, setLoading] = useState(true);
   const [layout, setLayout] = useState<'grid' | 'single'>('grid');
   const [showAddModal, setShowAddModal] = useState(false);
+  const [streamErrors, setStreamErrors] = useState<Record<number, boolean>>({});
   
   // For Maximize/Settings
   const [focusedCamId, setFocusedCamId] = useState<number | null>(null);
@@ -38,6 +39,12 @@ export default function Feeds() {
   const handleMaximize = (id: number) => {
     setFocusedCamId(id);
     setLayout('single');
+  };
+
+  const statusClass = (status: string) => {
+    if (status === 'ONLINE' || status === 'ACTIVE') return 'bg-green-500/80';
+    if (status === 'RETRYING') return 'bg-yellow-500/80';
+    return 'bg-red-500/80';
   };
 
   return (
@@ -109,9 +116,12 @@ export default function Feeds() {
                     <span className="px-2.5 py-1 bg-black/60 backdrop-blur text-[10px] text-white font-bold rounded shadow-sm tracking-widest uppercase border border-white/10">
                       CAM 0{index + 1}: {cam.name}
                     </span>
-                    <span className="px-2 py-1 bg-green-500/80 backdrop-blur text-[10px] text-white font-bold rounded shadow-sm uppercase tracking-tighter flex items-center gap-1.5">
+                    <span className={cn(
+                      "px-2 py-1 backdrop-blur text-[10px] text-white font-bold rounded shadow-sm uppercase tracking-tighter flex items-center gap-1.5",
+                      statusClass(cam.status)
+                    )}>
                       <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></div>
-                      LIVE
+                      {cam.status === 'ACTIVE' ? 'READY' : cam.status}
                     </span>
                   </div>
                   
@@ -144,19 +154,19 @@ export default function Feeds() {
                 {/* Live MJPEG Stream */}
                 <div className="flex-1 w-full relative bg-black" style={{ minHeight: '200px' }}>
                   <img
-                    src={`http://localhost:5001/stream/${cam.camera_id}`}
+                    src={`/stream/${cam.camera_id}`}
                     alt={`Camera ${cam.name} live feed`}
                     className="w-full h-full object-cover"
                     style={{ display: 'block', minHeight: '200px' }}
-                    onError={(e) => {
-                      const el = e.target as HTMLImageElement;
-                      el.style.opacity = '0';
-                    }}
-                    onLoad={(e) => {
-                      const el = e.target as HTMLImageElement;
-                      el.style.opacity = '1';
-                    }}
+                    onError={() => setStreamErrors(prev => ({ ...prev, [cam.camera_id]: true }))}
+                    onLoad={() => setStreamErrors(prev => ({ ...prev, [cam.camera_id]: false }))}
                   />
+                  {streamErrors[cam.camera_id] && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-950 text-slate-400">
+                      <Video size={28} className="mb-2 opacity-50" />
+                      <span className="text-xs font-semibold uppercase tracking-wider">Stream offline</span>
+                    </div>
+                  )}
                   {/* Subtle scan line overlay */}
                   <div className="absolute top-0 left-0 right-0 h-px bg-blue-500/30 animate-[scan_4s_ease-in-out_infinite] pointer-events-none" />
                 </div>

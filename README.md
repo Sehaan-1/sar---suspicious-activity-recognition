@@ -79,6 +79,18 @@
 └─────────────────────────────────────────────────────────┘
 ```
 
+```mermaid
+flowchart LR
+  user["Browser / React UI"] --> edge["Cloudflare DNS + HTTPS"]
+  edge --> proxy["Caddy or Nginx reverse proxy"]
+  proxy --> app["Express API + Vite static app"]
+  proxy --> stream["/stream/* -> AI Worker MJPEG"]
+  app --> data["/data volume: SQLite, config, media"]
+  worker["Python AI Worker: capture threads + shared YOLO inference"] --> app
+  worker --> stream
+  worker --> data
+```
+
 ---
 
 ## 🛠️ Tech Stack
@@ -194,6 +206,11 @@ Copy `.env.example` → `.env` and configure:
 | `INGEST_API_KEY`       | Shared key for worker ingest APIs | — (required)   |
 | `PORT`                 | Backend server port               | `3000`         |
 | `CLEANUP_MAX_AGE_DAYS` | Days before media is auto-deleted | `30`           |
+| `DATA_DIR`             | Runtime DB/config/media directory | `/data`        |
+| `WORKER_STREAM_BASE`   | Backend proxy target for MJPEG    | `http://ai-worker:5001` |
+| `YOLO_MODEL`           | Worker model file                 | `yolov8n.pt`   |
+| `TARGET_FPS`           | Inference FPS per camera target   | `3`            |
+| `SEED_SAMPLE_CAMERAS`  | Seed placeholder demo cameras     | `false`        |
 | `ADMIN_EMAIL`          | Initial admin account email       | — (optional)   |
 | `ADMIN_PASSWORD`       | Initial admin password            | — (optional)   |
 
@@ -205,9 +222,54 @@ Copy `.env.example` → `.env` and configure:
 
 ```bash
 npm test
+npm run test:python
+npm run lint
+npm audit --audit-level=moderate
 ```
 
-The current test suite uses Node's built-in test runner and includes guardrails against reintroducing hardcoded development secrets.
+The test suite uses Node's built-in test runner for backend/security contracts and Python `unittest` for AI rule behavior.
+
+For a full local container smoke check:
+
+```powershell
+./scripts/docker-smoke.ps1
+```
+
+---
+
+## SQLite Tradeoff
+
+SQLite is intentional for this capstone because the target deployment is a single Oracle Always Free VM. It keeps setup portable, makes demos easy to reset, and avoids a managed database dependency.
+
+PostgreSQL is the recommended upgrade if the system grows to multiple backend instances, higher write volume, concurrent operators, or production retention/reporting requirements.
+
+---
+
+## Deployment Target
+
+Recommended capstone deployment:
+
+- **Oracle Always Free VM** runs Docker Compose for the backend/frontend and AI worker.
+- **Cloudflare Free** handles DNS and HTTPS.
+- **Caddy or Nginx** reverse-proxies `/`, `/socket.io`, and `/stream/*`.
+- Runtime state lives in the Compose `runtime_data` volume mounted at `/data`.
+- The AI worker defaults to `yolov8n.pt` and `TARGET_FPS=3` for CPU-friendly inference.
+
+Colab and Streamlit are useful for experiments or companion demos, but not for hosting the live worker.
+
+---
+
+## Demo Metrics
+
+| Metric | Current target |
+| ------ | -------------- |
+| Deployment shape | Oracle Always Free single VM + Docker Compose |
+| Default model | YOLOv8n (`yolov8n.pt`) |
+| Inference scheduler | One shared model, latest-frame round-robin |
+| Target inference rate | 3 FPS per camera |
+| Persistence | SQLite/config/media under `/data` |
+| Validation | `npm test`, Python unittest, TypeScript lint, npm audit |
+| Demo media | Screenshots included; record 60-120s MP4 using `docs/demo-script.md` |
 
 ---
 
